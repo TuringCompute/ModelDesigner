@@ -1,0 +1,3 @@
+[submodule "web/external/turingDiv.js"]
+	path = web/external/turingDiv.js
+	url = https://github.com/TuringCompute/turingDiv.js.git
