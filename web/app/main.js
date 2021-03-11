@@ -1,5 +1,5 @@
 import {MouseState} from "../external/turingDiv.js/lib/mouse.js"
-import {ModelEditor} from "../app/components/layout/layout.js"
+import {ModelEditor} from "../app/components/modelEditor/modelEditor.js"
 import { DataStore } from "../external/turingDiv.js/lib/dataStore.js"
 
 window.main = function main(){

@@ -5,8 +5,15 @@
         <link rel="shortcut icon" href="#">
         <script type="module" src="./app/main.js"></script>
       </head>
-    <body onload="main()" onmousemove="mouse.onMouseMove(event)" onmouseleave="mouse.onMouseLeave(event)" onmouseup="mouse.onMouseUp(event)">
+    <body style="margin:0; padding:0;" onload="main()" onmousemove="mouse.onMouseMove(event)" onmouseleave="mouse.onMouseLeave(event)" onmouseup="mouse.onMouseUp(event)">
         <table width="100%">
+            <tr><td align="left" style="margin:0; padding:0;">
+                <table>
+                    <tr>
+                        <td onclick="showMenu('mainMenu', this)" style="border: 1px solid rgb(255,255,255); background-color: rgb(130, 130, 30); cursor: pointer;">&nbspView&nbsp</td>
+                    </tr>
+                </table>
+            </td></tr>
             <tr>
                 <td align="center" style="border-bottom: 1px solid rgb(26, 19, 19);"><h1>Catalog Model Editor</h1></td>
             </tr>
@@ -14,5 +21,6 @@
                 <td><div id="main"></div></td>
             </tr>
         </table>
+        <div id="popMenu"></div>
     </body>
 </html>
