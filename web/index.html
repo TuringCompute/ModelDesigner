@@ -5,12 +5,12 @@
         <link rel="shortcut icon" href="#">
         <script type="module" src="./app/main.js"></script>
       </head>
-    <body style="margin:0; padding:0;" onload="main()" onmousemove="mouse.onMouseMove(event)" onmouseleave="mouse.onMouseLeave(event)" onmouseup="mouse.onMouseUp(event)">
+    <body style="margin:0; padding:0;" onload="main()">
         <table width="100%">
             <tr><td align="left" style="margin:0; padding:0;">
                 <table>
                     <tr>
-                        <td onclick="showMenu('mainMenu', this)" style="border: 1px solid rgb(255,255,255); background-color: rgb(130, 130, 30); cursor: pointer;">&nbspView&nbsp</td>
+                        <td onclick="showMenuTopLeft((this.offsetTop + this.offsetHeight), this.offsetLeft, 'menuModelDesignerView')" style="border: 1px solid rgb(255,255,255); background-color: rgb(130, 130, 30); cursor: pointer;">&nbspView&nbsp</td>
                     </tr>
                 </table>
             </td></tr>
@@ -21,6 +21,6 @@
                 <td><div id="main"></div></td>
             </tr>
         </table>
-        <div id="popMenu"></div>
+        <div id="menuModelDesignerView"></div>
     </body>
 </html>
