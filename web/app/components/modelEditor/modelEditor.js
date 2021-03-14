@@ -14,18 +14,14 @@ class ModelEditor extends DivEle{
 
     constructor(props){
         super(props)
-        this.dataStore = props.dataStore
-        if(!this.dataStore || !(this.dataStore instanceof DataStore)){
-            throw Error("Component Model Editor needs dataStore in props")
-        }
         this.layoutDataId = this.id + "_menu_layout"
-        this.layout = this.dataStore.newData(this.layoutDataId, DataStore.subscriber(this.layoutDataId, this.handleEvent))
-        this.layout.hidden = []
+        this.layout = DataStore.GetStore().newData(this.layoutDataId, DataStore.subscriber(this.layoutDataId, this.handleEvent))
         this.init_children()
         let menuReg = MenuReg.GetMenu()
         this.menuView = new MenuView({
             "parentId": menuReg.id,
-            "childId": ModelEditor.Keys.menuView
+            "childId": ModelEditor.Keys.menuView,
+            "options": [ModelEditor.Keys.childProperty, ModelEditor.Keys.childViewer]
         })
     }
 
@@ -80,6 +76,7 @@ class MenuView extends DivEle{
             "  </tr>",
             "</table>"
         ]
+        this.addDivEleFrame(htmlList)
         return htmlList
     }
 
