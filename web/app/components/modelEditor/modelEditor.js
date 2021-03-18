@@ -23,6 +23,7 @@ class ModelEditor extends DivEle{
             "childId": ModelEditor.Keys.menuView,
             "options": [ModelEditor.Keys.childProperty, ModelEditor.Keys.childViewer]
         })
+        this.menuView.selection[MenuView.selected] = this.children.listAttr()
     }
 
     init_children(){
@@ -37,32 +38,43 @@ class ModelEditor extends DivEle{
     }
 
     outputHTML(){
-        let cProp = this.children.getValue(ModelEditor.Keys.childProperty)
-        let cViewer = this.children.getValue(ModelEditor.Keys.childViewer)
         let htmlList = []
-        htmlList.push("<table><tr>")
-        if(this.layout.hidden.indexOf(ModelEditor.Keys.childProperty) == -1){
-            htmlList.push("<td>")
-            let propHtml = cProp.node.outputHTML()
-            Format.applyIndent(propHtml)
-            htmlList.push(...propHtml)
-            htmlList.push("</td>")
+        htmlList.push("<table width=100% style='height:100%; border: 0px;border-collapse: collapse;'><tr>")
+        let dispChildren = this.menuView.selection[MenuView.selected]
+        if(dispChildren.length > 0){
+            for(let idx = 0; idx<dispChildren.length; idx ++){
+                if(idx == dispChildren.length - 1){
+                    htmlList.push("<td style='vertical-align: top;width: 100%;'>")
+                } else {
+                    htmlList.push("<td style='vertical-align: top;'>")
+                }
+                let childRef = this.children.getValue(dispChildren[idx])
+                let cHtml = childRef.node.outputHTML()
+                Format.applyIndent(cHtml)
+                htmlList.push(...cHtml)
+                htmlList.push("</td>")
+            }
+        } else {
+            htmlList.push("<td></td>")
         }
-        let viewHtml = cViewer.node.outputHTML()
-        htmlList.push("<td>")
-        Format.applyIndent(viewHtml)
-        htmlList.push(...viewHtml)
-        htmlList.push("</td>")
         htmlList.push("</tr></table>")
         this.addDivEleFrame(htmlList)
         return htmlList
     }
-
 }
 
 class MenuView extends DivEle{
+    static selected = "menuViewSelected"
+
     constructor(props){
         super(props)
+        this.dataId = this.id + "_selection"
+        this.selection = DataStore.GetStore().newData(this.dataId, DataStore.subscriber(this.id, this.handleEvent))
+        this.selection[MenuView.selected] = []
+    }
+
+    processEvent(src, event, eventObj){
+        return false
     }
 
     outputHTML(){
@@ -79,7 +91,6 @@ class MenuView extends DivEle{
         this.addDivEleFrame(htmlList)
         return htmlList
     }
-
 }
 
 

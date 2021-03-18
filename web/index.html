@@ -5,20 +5,20 @@
         <link rel="shortcut icon" href="#">
         <script type="module" src="./app/main.js"></script>
       </head>
-    <body style="margin:0; padding:0;" onload="main()">
-        <table width="100%">
-            <tr><td align="left" style="margin:0; padding:0;">
-                <table>
+    <body style="margin:0; padding:0;" onload="main();">
+        <table width="100%" style="height: 100%;border: 0px;border-collapse: collapse;">
+            <tr><td align="left" style="height:auto;">
+                <table style="margin: 0px;padding: 0px;border-collapse: collapse;;">
                     <tr>
                         <td onclick="showMenuTopLeft((this.offsetTop + this.offsetHeight), this.offsetLeft, 'menuModelDesignerView')" style="border: 1px solid rgb(255,255,255); background-color: rgb(130, 130, 30); cursor: pointer;">&nbspView&nbsp</td>
                     </tr>
                 </table>
             </td></tr>
             <tr>
-                <td align="center" style="border-bottom: 1px solid rgb(26, 19, 19);"><h1>Catalog Model Editor</h1></td>
+                <td align="center" style="border-bottom: 1px solid rgb(26, 19, 19);height:30px;"><h1>Catalog Model Editor</h1></td>
             </tr>
             <tr>
-                <td><div id="main"></div></td>
+                <td style="height:100%;vertical-align: top;"><div id="main" style="height: 100%; width:100%;vertical-align: top;"></div></td>
             </tr>
         </table>
         <div id="menuModelDesignerView"></div>
