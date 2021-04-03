@@ -73,7 +73,7 @@ class MenuView extends DivEle{
         this.selection[MenuView.selected] = []
     }
 
-    processEvent(src, event, eventObj){
+    processEvent(eventObj){
         return false
     }
 
