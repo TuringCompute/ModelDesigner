@@ -4,9 +4,11 @@ import {Format} from "../../../external/turingDiv.js/lib/format.js"
 import {ModelPropEditor} from "../property/property.js"
 import {ModelViewer} from "../viewer/viewer.js"
 import {MenuReg} from "../../../external/turingDiv.js/component/menuReg/menuReg.js"
+import {EventSrc} from "../../../external/turingDiv.js/lib/event.js"
 
 class ModelEditor extends DivEle{
     static Keys = Object.freeze({
+        "catDataId": "ModelEditorCatalogDataId",
         "childProperty": "ModelEditorProperty",
         "childViewer": "ModelEditorViewer",
         "menuView": "menuModelDesignerView"
@@ -14,16 +16,31 @@ class ModelEditor extends DivEle{
 
     constructor(props){
         super(props)
-        this.layoutDataId = this.id + "_menu_layout"
-        this.layout = DataStore.GetStore().newData(this.layoutDataId, DataStore.subscriber(this.layoutDataId, this.handleEvent))
+        let data = DataStore.GetStore()
+        this.dataBag = data.newData(this.id, DataStore.subscriber(this.id, this.handleEvent))
         this.init_children()
         let menuReg = MenuReg.GetMenu()
-        this.menuView = new MenuView({
+        let menuView = new MenuView({
             "parentId": menuReg.id,
             "childId": ModelEditor.Keys.menuView,
-            "options": [ModelEditor.Keys.childProperty, ModelEditor.Keys.childViewer]
+            "options": [
+                {
+                    "menuDisplay": "Property Window",
+                    "childId": ModelEditor.Keys.childProperty,
+                    "selected" : true
+                },
+                {
+                    "menuDisplay": "Model Viewer",
+                    "childId": ModelEditor.Keys.childViewer,
+                    "selected" : true
+                }
+            ]
         })
-        this.menuView.selection[MenuView.selected] = this.children.listAttr()
+        let menuData = data.getData(menuView.id, DataStore.subscriber(this.id, this.handleEvent))
+        this.displayOptions = menuData.options
+        if(!this.displayOptions){
+            throw Error("MenuView failed to be initilized.")
+        }
     }
 
     init_children(){
@@ -40,7 +57,13 @@ class ModelEditor extends DivEle{
     outputHTML(){
         let htmlList = []
         htmlList.push("<table width=100% style='height:100%; border: 0px;border-collapse: collapse;'><tr>")
-        let dispChildren = this.menuView.selection[MenuView.selected]
+        let dispChildren = []
+        for(let optItem of this.displayOptions){
+            if(optItem.selected){
+                let childRef = this.children.getValue(optItem.childId)
+                dispChildren.push(childRef.node)
+            }
+        }
         if(dispChildren.length > 0){
             for(let idx = 0; idx<dispChildren.length; idx ++){
                 if(idx == dispChildren.length - 1){
@@ -48,8 +71,7 @@ class ModelEditor extends DivEle{
                 } else {
                     htmlList.push("<td style='vertical-align: top;'>")
                 }
-                let childRef = this.children.getValue(dispChildren[idx])
-                let cHtml = childRef.node.outputHTML()
+                let cHtml = dispChildren[idx].outputHTML()
                 Format.applyIndent(cHtml)
                 htmlList.push(...cHtml)
                 htmlList.push("</td>")
@@ -61,33 +83,90 @@ class ModelEditor extends DivEle{
         this.addDivEleFrame(htmlList)
         return htmlList
     }
+
+    processEvent(eventObj){
+        if(eventObj.type == DataStore.dataChanged){
+            return true
+        } else if(eventObj.type == ModelPropEditor.Events.hideProperty){
+            for(let dispOpt of this.displayOptions){
+                if(dispOpt.childId == ModelEditor.Keys.childProperty){
+                    dispOpt.selected = false
+                }
+            }
+            return true
+        }
+        return false
+    }
+
 }
 
 class MenuView extends DivEle{
-    static selected = "menuViewSelected"
+    static Event = Object.freeze({
+        "optSwitch": "ModelEditorDisplayMenuOptSwitch"
+    })
+
+    static Key = Object.freeze({
+        "optionDataId": "MenuViewOptionDataId"        
+    })
 
     constructor(props){
         super(props)
-        this.dataId = this.id + "_selection"
-        this.selection = DataStore.GetStore().newData(this.dataId, DataStore.subscriber(this.id, this.handleEvent))
-        this.selection[MenuView.selected] = []
+        this.store = DataStore.GetStore()
+        let data = this.store.newData(this.id, DataStore.subscriber(this.id, this.handleEvent))
+        this.options = data.options = []        
+        this.validateOptions()
+        
+    }
+
+    validateOptions(){
+        if(!this.props || !this.props.options || !Array.isArray(this.props.options) || this.props.options.length == 0){
+            throw Error("Invalid options, null, not array or zero length")
+        }
+        let optItem = null;
+        for(let idx=0; idx<this.props.options.length; idx++){
+            optItem = this.props.options[idx]
+            for(let attr of ["menuDisplay", "childId", "selected"]){
+                if(!optItem.hasOwnProperty(attr)){
+                    throw Error("missing attr [" + attr + "] @options[" + idx + "]")
+                }
+                if(typeof optItem.selected != "boolean"){
+                    throw Error("selected attr @options[" + idx + "] should be boolean")
+                }
+            }
+            this.options.push(optItem)
+        }
+
     }
 
     processEvent(eventObj){
+        if(eventObj.type == MenuView.Event.optSwitch){
+            if(eventObj.data.hasOwnProperty("idx") && this.options[eventObj.data.idx]){
+                if(this.options[eventObj.data.idx].selected){
+                    this.options[eventObj.data.idx].selected = false
+                } else {
+                    this.options[eventObj.data.idx].selected = true
+                }
+                this.store.notify(this.id)
+            }
+            return true
+        }
         return false
     }
 
     outputHTML(){
-        let htmlList = [
-            "<table border=1>",
-            "  <tr>",
-            "    <td onClick='alert(1)'>line 1</td>",
-            "  </tr>",
-            "  <tr>",
-            "    <td onClick='alert(2)'>line 2</td>",
-            "  </tr>",
-            "</table>"
-        ]
+        let htmlList = ["<table border=1>"]
+        let selected = ""
+        for(let idx=0; idx<this.options.length; idx ++){
+            if(this.options[idx].selected){
+                selected = "&#10004;"
+            } else {
+                selected = "&nbsp;"
+            }
+            htmlList.push("  <tr style='cursor: pointer;' onClick='" + this.eventTriger(EventSrc.new(MenuView.Event.optSwitch, null, {"idx": idx})) + "'>")
+            htmlList.push("    <td>" + this.options[idx].menuDisplay + " " + selected + "</td>")
+            htmlList.push("  </tr>")
+        }
+        htmlList.push("</table>")
         this.addDivEleFrame(htmlList)
         return htmlList
     }

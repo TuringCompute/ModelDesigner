@@ -1,26 +1,35 @@
 import {DataStore} from "../../external/turingDiv.js/lib/dataStore.js"
+import { EventSrc } from "../../external/turingDiv.js/lib/event.js"
 
 
 class Catalog{
     static Key = Object.freeze({
-        "catalog": "model-"
+        "catalog": "catalog"
     })
 
-    static Event = Object.freeze({
-        "dataSync": "catalogDataSynced",
-        "updated": "catalogModelDataUpdated"
-    })
-
-    constructor(catalogDataId, catId){
-        this.dataId = catalogDataId
-        this.catId = catId
-        this.dataId = Model.Key.model + catId
-        this.dataBag = DataStore.GetStore().getData(this.dataId, DataStore.subscriber(this.dataId, this.dataChangedHandler))
-        this.dataBag.catalog = {}
-        this.dataBag.editingCatId = null
+    constructor(){      
+        if(!Catalog.instance){
+            this.dataBag = DataStore.GetStore().getData(Catalog.Key.catalog, DataStore.subscriber(Catalog.Key.catalog, this.handleEvent))
+            this.dataBag[Catalog.Key.catalog] = {}
+            Catalog.instance = this
+        }
+        return Catalog.instance    
     }
 
-    dataChangedHandler(){
+    getModel(catId){
+        let catalog = this.dataBag[Catalog.Key.catalog]
+        if(catalog.hasOwnProperty(catId)){
+            return catalog[catId]
+        }
+        return null
+    }
+
+    static propertySection(model, sectionName){
+        
+
+
 
     }
+
+
 }
