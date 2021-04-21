@@ -6,6 +6,7 @@ import {TabSwitch} from "../../../external/turingDiv.js/component/tabSwitch/tabS
 import {EditList, TableList} from "../../../external/turingDiv.js/component/tableList/tableList.js"
 import {FormEditor} from "../../../external/turingDiv.js/component/formEditor/formEditor.js"
 import {DataStore} from "../../../external/turingDiv.js/lib/dataStore.js"
+import {Schema, Catalog} from "../../data/catalog.js"
 
 class ModelPropEditor extends DivEle{
     static Keys = Object.freeze({
@@ -16,7 +17,10 @@ class ModelPropEditor extends DivEle{
     })
 
     static Tabs = Object.freeze([
-        "Inputs", "Common", "Instance", "Children"
+        { "input": "Inputs" }, 
+        { "common": "Common"}, 
+        { "instance": "Instance"}, 
+        { "children": "Children"}
     ])
 
     static Events = Object.freeze({
@@ -263,6 +267,8 @@ class ModelPropEditor extends DivEle{
         } else if(eventObj.type == TabSwitch.Event.changed){
             let tab = this.children.getValue(ModelPropEditor.Keys.section).node
             let section = tab.tabList[tab.selectedTab]
+            
+
         }
 
         return false
