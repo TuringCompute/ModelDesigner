@@ -4,9 +4,10 @@ import {MouseState} from "../../../external/turingDiv.js/lib/mouse.js"
 import {EventSrc} from "../../../external/turingDiv.js/lib/event.js"
 import {TabSwitch} from "../../../external/turingDiv.js/component/tabSwitch/tabSwitch.js"
 import {EditList, TableList} from "../../../external/turingDiv.js/component/tableList/tableList.js"
-import {FormEditor} from "../../../external/turingDiv.js/component/formEditor/formEditor.js"
 import {DataStore} from "../../../external/turingDiv.js/lib/dataStore.js"
 import {Schema, Catalog} from "../../data/catalog.js"
+import {OrderedDict} from "../../../external/turingDiv.js/lib/orderedDict.js"
+import {AttrEditor} from "../attrEditor/attrEditor.js"
 
 class ModelPropEditor extends DivEle{
     static Keys = Object.freeze({
@@ -14,13 +15,26 @@ class ModelPropEditor extends DivEle{
         "section": "modelPropertySection",
         "attrList": "modelPropertyList",
         "attrEditor": "modelPropertyEditor",
+        "selectChild": "modelPropertySelectedChild"
     })
 
     static Tabs = Object.freeze([
-        { "input": "Inputs" }, 
-        { "common": "Common"}, 
-        { "instance": "Instance"}, 
-        { "children": "Children"}
+        { 
+            [TabSwitch.Key.tabKey]: Schema.Key.input,
+            [TabSwitch.Key.tabDisplay]: "Inputs" 
+        }, 
+        { 
+            [TabSwitch.Key.tabKey]: Schema.Key.common,
+            [TabSwitch.Key.tabDisplay]: "Common"
+        }, 
+        { 
+            [TabSwitch.Key.tabKey]: Schema.Key.instance, 
+            [TabSwitch.Key.tabDisplay]: "Instance"
+        }, 
+        { 
+            [TabSwitch.Key.tabKey]: Schema.Key.children,
+            [TabSwitch.Key.tabDisplay]: "Children"
+        }
     ])
 
     static Events = Object.freeze({
@@ -36,6 +50,8 @@ class ModelPropEditor extends DivEle{
         this.divHeightIncre = 0
         this.store = DataStore.GetStore()
         this.dataBag = this.store.newData(this.id, DataStore.subscriber(this.id, this.handleEvent))
+        this.currentSection = null
+        this.currentChild = null
         this.initChildren()
     }
 
@@ -62,13 +78,12 @@ class ModelPropEditor extends DivEle{
     }
 
     initChildren(){
-        let tabParam = {
+        new TabSwitch({
             "parentId": this.id,
             "childId": ModelPropEditor.Keys.section,
-        }
-        tabParam[TabSwitch.Key.tabList] = ModelPropEditor.Tabs
-        new TabSwitch(tabParam)
-        let editor = new FormEditor({
+            [TabSwitch.Key.tabList]: ModelPropEditor.Tabs
+        })
+        let editor = new AttrEditor({
             "parentId": this.id,
             "childId": ModelPropEditor.Keys.attrEditor,
             "schema": ModelPropEditor.attrSchema()
@@ -88,50 +103,18 @@ class ModelPropEditor extends DivEle{
         childHtml.push("<table>")
         childHtml.push("  <tr>")
         childHtml.push("    <td style='height:1px;'>")
-        childHtml.push("        TODO: Add drop down for selected children here.")
-        childHtml.push("    </td>")
-        childHtml.push("  </tr>")
-        childHtml.push("  <tr>")
-        childHtml.push("    <td>")
-        childHtml.push("        TODO: input definition for children.")
+        childHtml.push("        <b>Input Definition:</b><br>")
+        if (this.dataBag.hasOwnProperty(ModelPropEditor.Keys.selectChild)){
+            childHtml.push("        " + this.dataBag[ModelPropEditor.Keys.selectChild])
+        }else{
+            childHtml.push("        Please select a child")
+        }
+        
         childHtml.push("    </td>")
         childHtml.push("  </tr>")
         childHtml.push("</table>")
         return childHtml
-    }
-
-    propertyBody(htmlList){
-        let propHtml = []
-        propHtml.push("<tr><td>")
-        let tab = this.children.getValue(ModelPropEditor.Keys.section).node
-        let attrList = this.children.getValue(ModelPropEditor.Keys.attrList)
-        let attrEditor = this.children.getValue(ModelPropEditor.Keys.attrEditor)
-        let tabHtml = tab.outputHTML()
-        Format.applyIndent(tabHtml)
-        propHtml.push(...tabHtml)
-        propHtml.push("</td></tr>")
-        propHtml.push("<tr><td style='vertical-align: top; height:" + this.divHeight + "px;'>")
-        let selectedTab = tab.selectedTabValue()
-        if (selectedTab == "Children" ){
-            let childViewHtml = []
-            Format.applyIndent(childViewHtml)
-            propHtml.push(...childViewHtml)
-        } else {
-            let attrListHtml = attrList.node.outputHTML()
-            Format.applyIndent(attrListHtml)
-            propHtml.push(...attrListHtml)
-        }
-        propHtml.push("</td></tr>")
-        propHtml.push("<tr><td colspan=3 height='100%'>")
-        let editorHtml = attrEditor.node.outputHTML()
-        Format.applyIndent(editorHtml)
-        propHtml.push(...editorHtml)
-        propHtml.push("</td></tr>")
-        Format.applyIndent(propHtml)
-        propHtml.push("</table>")
-        Format.applyIndent(propHtml)
-        htmlList.push(...propHtml)
-    }
+    }    
 
     outputHTML(){
         let htmlList = []
@@ -160,16 +143,15 @@ class ModelPropEditor extends DivEle{
         let divHeight = this.divHeight + this.divHeightIncre
         htmlList.push("    <td style='vertical-align: top; height:" + divHeight + "px;'>")
         let selectedTab = tab.selectedTabValue()
-        if (selectedTab == "Children" ){
+        if (selectedTab == Schema.Key.children ){
             let childViewHtml = this.childrenView()
             Format.applyIndent(childViewHtml, "      ")
             htmlList.push(...childViewHtml)
-        } else {
-            let attrList = this.children.getValue(ModelPropEditor.Keys.attrList)
-            let attrListHtml = attrList.node.outputHTML()
-            Format.applyIndent(attrListHtml, "      ")
-            htmlList.push(...attrListHtml)
         }
+        let attrList = this.children.getValue(ModelPropEditor.Keys.attrList).node
+        let attrListHtml = attrList.outputHTML()
+        Format.applyIndent(attrListHtml, "      ")
+        htmlList.push(...attrListHtml)
         htmlList.push("    </td>")
         htmlList.push("  </tr>")
         htmlList.push("  <tr>")
@@ -177,8 +159,8 @@ class ModelPropEditor extends DivEle{
         htmlList.push("  </tr>")
         htmlList.push("  <tr>")
         htmlList.push("    <td style='vertical-align: top;'>")
-        let attrEditor = this.children.getValue(ModelPropEditor.Keys.attrEditor)
-        let editorHtml = attrEditor.node.outputHTML()
+        let attrEditor = this.children.getValue(ModelPropEditor.Keys.attrEditor).node
+        let editorHtml = attrEditor.outputHTML()
         Format.applyIndent(editorHtml, "      ")
         htmlList.push(...editorHtml)
         htmlList.push("    </td>")
@@ -197,6 +179,7 @@ class ModelPropEditor extends DivEle{
         }
         htmlList.push("</div>")
     }
+    
     processEvent(eventObj){
         let mouse = new MouseState()
         let event = eventObj[EventSrc.Key.rawEvent]
@@ -237,42 +220,73 @@ class ModelPropEditor extends DivEle{
         } else if(eventObj.type == DataStore.dataChanged && eventObj.data[EventSrc.Key.src] != this.id){
             let attrList = this.children.getValue(ModelPropEditor.Keys.attrList).node
             let attrEditor = this.children.getValue(ModelPropEditor.Keys.attrEditor).node
-            let currentId = attrEditor.dataBag[FormEditor.Key.dataId]
             if(eventObj.src == attrEditor.id){
-                if(currentId == EditList.Key.new){
-                    let newRecord = attrList.dataBag[EditList.Key.newRecord]
-                    attrList.dataBag[EditList.Key.newRecord] = {}
-                    attrList.dataBag[TableList.Key.records].push(newRecord)
-                    attrEditor.dataBag[FormEditor.Key.dataId] = attrList.dataBag[TableList.Key.selectedId] = (attrList.dataBag[TableList.Key.records].length - 1).toString()
-                    attrList.render()
-                } else if(attrList.dataBag[TableList.Key.records][currentId]){
-                    attrList.render()
-                }
+                this.refreshList(attrList, attrEditor)
             } else if(eventObj.src == attrList.id){
-                let editDataId = attrList.dataBag[TableList.Key.selectedId]
-                if(editDataId != currentId){
-                    let editData = {}
-                    if(editDataId == EditList.Key.new){
-                        editData = attrList.dataBag[EditList.Key.newRecord]
-                    } else if (attrList.dataBag[TableList.Key.records][editDataId]) {
-                        editData = attrList.dataBag[TableList.Key.records][editDataId]
-                    } else {
-                        editDataId = null
-                        editData = {}
-                    }
-                    FormEditor.bindData(attrEditor.dataBag, editDataId, editData)
-                    attrEditor.render()
-                }
+                this.refreshEditor(attrList, attrEditor)
             }
         } else if(eventObj.type == TabSwitch.Event.changed){
             let tab = this.children.getValue(ModelPropEditor.Keys.section).node
-            let section = tab.tabList[tab.selectedTab]
-            
-
+            let section = tab.selectedTabValue()
+            let shouldRender = false
+            if(section == Schema.Key.children ||this.currentSection == Schema.Key.children){
+                shouldRender = true
+            }
+            this.currentSection = section
+            if(this.dataBag.hasOwnProperty(Catalog.Key.model)){
+                if(section == Schema.Key.children){
+                    // display children section with drop down list of children
+                    let children = new OrderedDict(this.dataBag[Catalog.Key.model][Schema.Key.children])
+                } else {
+                    // display selected attribute section in current model
+                    let sectionAttrList = Schema.getPropertySection(this.dataBag[Catalog.Key.model], section)        
+                    let attrList = this.children.getValue(ModelPropEditor.Keys.attrList).node
+                    attrList.dataBag[TableList.Key.records] = sectionAttrList
+                    attrList.dataBag[EditList.Key.newRecord] = {}
+                    if(attrList.dataBag.hasOwnProperty(TableList.Key.selectedId)){
+                        delete attrList.dataBag[TableList.Key.selectedId]
+                        this.refreshEditor(attrList, attrEditor)
+                    }
+                }    
+            }            
+            return true
         }
 
         return false
     }
+
+    refreshEditor(attrList, attrEditor){
+        let currentId = attrEditor.dataBag.hasOwnProperty(AttrEditor.Key.dataId)? attrEditor.dataBag[AttrEditor.Key.dataId] : -1
+        let editDataId = attrList.dataBag.hasOwnProperty(TableList.Key.selectedId)? attrList.dataBag[TableList.Key.selectedId] : -1
+        if(editDataId != currentId){
+            let editData = {}
+            if(editDataId == EditList.Key.new){
+                editData = attrList.dataBag[EditList.Key.newRecord]
+            } else if (attrList.dataBag[TableList.Key.records][editDataId]) {
+                editData = attrList.dataBag[TableList.Key.records][editDataId]
+            } else {
+                editDataId = null
+                editData = {}
+            }
+            AttrEditor.bindData(attrEditor.dataBag, editDataId, editData)
+            attrEditor.render()
+        }
+    }
+
+    refreshList(attrList, attrEditor){
+        let currentId = attrEditor.dataBag.hasOwnProperty(AttrEditor.Key.dataId)? attrEditor.dataBag[AttrEditor.Key.dataId] : -1
+        if(currentId == EditList.Key.new){
+            let newRecord = attrList.dataBag[EditList.Key.newRecord]
+            attrList.dataBag[EditList.Key.newRecord] = {}
+            attrList.dataBag[TableList.Key.records].push(newRecord)
+            attrEditor.dataBag[AttrEditor.Key.dataId] = attrList.dataBag[TableList.Key.selectedId] = (attrList.dataBag[TableList.Key.records].length - 1).toString()
+            attrList.render()
+        } else if(attrList.dataBag[TableList.Key.records][currentId]){
+            attrList.render()
+        }
+
+    }
+
 }
 
 export {ModelPropEditor}

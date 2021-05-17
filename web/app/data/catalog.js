@@ -3,11 +3,14 @@ import {DataStore} from "../../external/turingDiv.js/lib/dataStore.js"
 
 class Schema {
     static Key = Object.freeze({
-        "id": "id",
         "attribute": "attribute",
         "catId": "catId",
         "children": "children",
+        "common": "common",
         "definition": "definition",
+        "id": "id",
+        "input": "input",
+        "instance": "instance",
         "name": "name",
         "properties": "properties",
         "propertySections": "propertySections",
@@ -89,6 +92,10 @@ class Schema {
             }
         }
     }
+
+    static getChildrenInput(model, childId){
+        
+    }
 }
 
 
@@ -115,3 +122,5 @@ class Catalog{
         return null
     }
 }
+
+export {Catalog, Schema}
