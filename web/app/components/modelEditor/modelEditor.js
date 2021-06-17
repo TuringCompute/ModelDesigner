@@ -2,7 +2,7 @@ import {DivEle} from "../../../external/turingDiv.js/lib/divEle.js"
 import {DataStore} from "../../../external/turingDiv.js/lib/dataStore.js"
 import {Format} from "../../../external/turingDiv.js/lib/format.js"
 import {ModelPropEditor} from "../property/property.js"
-import {ModelViewer} from "../viewer/viewer.js"
+import {ModelViewer} from "../ModelViewer/modelViewer.js"
 import {MenuReg} from "../../../external/turingDiv.js/component/menuReg/menuReg.js"
 import {EventSrc} from "../../../external/turingDiv.js/lib/event.js"
 
@@ -56,7 +56,7 @@ class ModelEditor extends DivEle{
 
     outputHTML(){
         let htmlList = []
-        htmlList.push("<table width=100% style='height:100%; border: 0px;border-collapse: collapse;'><tr>")
+        htmlList.push("<table style='width:100%; height:100%; border: 0px;border-collapse: collapse;'><tr>")
         let dispChildren = []
         for(let optItem of this.displayOptions){
             if(optItem.selected){
