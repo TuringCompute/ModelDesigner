@@ -3,13 +3,17 @@ import {DataStore} from "../../../external/turingDiv.js/lib/dataStore.js"
 import {Format} from "../../../external/turingDiv.js/lib/format.js"
 import {ModelPropEditor} from "../property/property.js"
 import {ModelViewer} from "../ModelViewer/modelViewer.js"
+import {ModelList} from "../modelList/modelList.js"
 import {MenuReg} from "../../../external/turingDiv.js/component/menuReg/menuReg.js"
 import {EventSrc} from "../../../external/turingDiv.js/lib/event.js"
+import {WinEle} from "../../../external/turingDiv.js/component/window/window.js"
+
 
 class ModelEditor extends DivEle{
     static Keys = Object.freeze({
         "catDataId": "ModelEditorCatalogDataId",
         "childProperty": "ModelEditorProperty",
+        "childIconList": "ModelEditorIconList",
         "childViewer": "ModelEditorViewer",
         "menuView": "menuModelDesignerView"
     })
@@ -20,9 +24,38 @@ class ModelEditor extends DivEle{
         this.dataBag = data.newData(this.id, DataStore.subscriber(this.id, this.handleEvent))
         this.init_children()
         let menuReg = MenuReg.GetMenu()
-        let menuView = new MenuView({
-            "parentId": menuReg.id,
+        let menuView = this.children.getValue(ModelEditor.Keys.menuView).node
+        menuReg.registerMenu(menuView)
+        this.displayOptions = menuView.options
+    }
+
+    init_children(){
+        let propWin = new WinEle({
+            "childId": ModelEditor.Keys.childProperty,
+            "parentId": this.id,
+            "title": "Properties",
+            "enableMove": false,
+            "enableResize": false,
+            "enableResizeRight": true            
+        })
+        new ModelPropEditor({
+            "childId": ModelEditor.Keys.childProperty,
+            "parentId": propWin.id
+        })
+        let viewWin = new WinEle({
+            "childId": ModelEditor.Keys.childViewer,
+            "title": "Model Viewer",
+            "parentId": this.id,
+            "enableMove": false,
+            "enableResize": false
+        })
+        new ModelViewer({
+            "childId": ModelEditor.Keys.childViewer,
+            "parentId": viewWin.id
+        })
+        new MenuView({
             "childId": ModelEditor.Keys.menuView,
+            "parentId": this.id,
             "options": [
                 {
                     "menuDisplay": "Property Window",
@@ -30,55 +63,30 @@ class ModelEditor extends DivEle{
                     "selected" : true
                 },
                 {
-                    "menuDisplay": "Model Viewer",
+                    "menuDisplay": "Viewer Window",
                     "childId": ModelEditor.Keys.childViewer,
                     "selected" : true
                 }
             ]
-        })
-        let menuData = data.getData(menuView.id, DataStore.subscriber(this.id, this.handleEvent))
-        this.displayOptions = menuData.options
-        if(!this.displayOptions){
-            throw Error("MenuView failed to be initilized.")
-        }
-    }
-
-    init_children(){
-        new ModelPropEditor({
-            "childId": ModelEditor.Keys.childProperty,
-            "parentId": this.id
-        })
-        new ModelViewer({
-            "childId": ModelEditor.Keys.childViewer,
-            "parentId": this.id
         })
     }
 
     outputHTML(){
         let htmlList = []
         htmlList.push("<table style='width:100%; height:100%; border: 0px;border-collapse: collapse;'><tr>")
-        let dispChildren = []
-        for(let optItem of this.displayOptions){
-            if(optItem.selected){
-                let childRef = this.children.getValue(optItem.childId)
-                dispChildren.push(childRef.node)
-            }
+        if(this.displayOptions[0].selected){
+            htmlList.push("<td style='vertical-align: top;'>")
+            let editor = this.children.getValue(ModelEditor.Keys.childProperty).node
+            let propertyHtml = editor.outputHTML()
+            Format.applyIndent(propertyHtml)
+            htmlList.push(...propertyHtml)
+            htmlList.push("</td>")
         }
-        if(dispChildren.length > 0){
-            for(let idx = 0; idx<dispChildren.length; idx ++){
-                if(idx == dispChildren.length - 1){
-                    htmlList.push("<td style='vertical-align: top;width: 100%;'>")
-                } else {
-                    htmlList.push("<td style='vertical-align: top;'>")
-                }
-                let cHtml = dispChildren[idx].outputHTML()
-                Format.applyIndent(cHtml)
-                htmlList.push(...cHtml)
-                htmlList.push("</td>")
-            }
-        } else {
-            htmlList.push("<td></td>")
-        }
+        htmlList.push("<td style='vertical-align: top;width: 100%;'>")
+        let modelViewerHtml = this.children.getValue(ModelEditor.Keys.childViewer).node.outputHTML()
+        Format.applyIndent(modelViewerHtml)
+        htmlList.push(...modelViewerHtml)        
+        htmlList.push("</td>")
         htmlList.push("</tr></table>")
         this.addDivEleFrame(htmlList)
         return htmlList
@@ -87,17 +95,19 @@ class ModelEditor extends DivEle{
     processEvent(eventObj){
         if(eventObj.type == DataStore.dataChanged){
             return true
-        } else if(eventObj.type == ModelPropEditor.Events.hideProperty){
+        } else if(eventObj.type == WinEle.Event.closed || eventObj.type == MenuView.Event.optSwitch){
             for(let dispOpt of this.displayOptions){
-                if(dispOpt.childId == ModelEditor.Keys.childProperty){
-                    dispOpt.selected = false
+                let childNode = this.children.getValue(dispOpt.childId).node
+                if(eventObj.type == WinEle.Event.closed){
+                    dispOpt.selected = !childNode.closed
+                } else {
+                    childNode.closed = !dispOpt.selected
                 }
             }
             return true
         }
         return false
     }
-
 }
 
 class MenuView extends DivEle{
@@ -111,20 +121,18 @@ class MenuView extends DivEle{
 
     constructor(props){
         super(props)
-        this.store = DataStore.GetStore()
-        let data = this.store.newData(this.id, DataStore.subscriber(this.id, this.handleEvent))
-        this.options = data.options = []        
         this.validateOptions()
-        
+        this.menuId = ModelEditor.Keys.menuView
+        this.menuReg = MenuReg.GetMenu()
     }
 
     validateOptions(){
-        if(!this.props || !this.props.options || !Array.isArray(this.props.options) || this.props.options.length == 0){
+        if(!this.options || !Array.isArray(this.options) || this.options.length == 0){
             throw Error("Invalid options, null, not array or zero length")
         }
         let optItem = null;
-        for(let idx=0; idx<this.props.options.length; idx++){
-            optItem = this.props.options[idx]
+        for(let idx=0; idx<this.options.length; idx++){
+            optItem = this.options[idx]
             for(let attr of ["menuDisplay", "childId", "selected"]){
                 if(!optItem.hasOwnProperty(attr)){
                     throw Error("missing attr [" + attr + "] @options[" + idx + "]")
@@ -133,9 +141,7 @@ class MenuView extends DivEle{
                     throw Error("selected attr @options[" + idx + "] should be boolean")
                 }
             }
-            this.options.push(optItem)
         }
-
     }
 
     processEvent(eventObj){
@@ -146,8 +152,8 @@ class MenuView extends DivEle{
                 } else {
                     this.options[eventObj.data.idx].selected = true
                 }
-                this.store.notify(this.id)
             }
+            this.menuReg.handleEvent(EventSrc.new(MenuReg.Events.hide, null, null))            
             return true
         }
         return false

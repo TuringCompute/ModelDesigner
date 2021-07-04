@@ -44,10 +44,6 @@ class ModelPropEditor extends DivEle{
 
     constructor(props){
         super(props)
-        this.width = 300
-        this.widthIncre = 0
-        this.divHeight = 400
-        this.divHeightIncre = 0
         this.store = DataStore.GetStore()
         this.dataBag = this.store.newData(this.id, DataStore.subscriber(this.id, this.handleEvent))
         this.currentSection = null
@@ -118,19 +114,7 @@ class ModelPropEditor extends DivEle{
 
     outputHTML(){
         let htmlList = []
-        let width = this.width + this.widthIncre        
-        htmlList.push("<table width='" + width + "px' style='border-collapse: collapse; height: 100%'>")
-        htmlList.push("  <tr>")
-        htmlList.push("    <td style='vertical-align: top; height: 1px; background: blue;'>")
-        htmlList.push("      <table width=100%>")
-        htmlList.push("        <tr>")
-        htmlList.push("          <td style='color: white;'>Property</td>")
-        htmlList.push("          <td style='width: 1px;'><button type='button' onclick='" + this.eventTriger(EventSrc.new(ModelPropEditor.Events.hideProperty, null, {})) + "'>X</button></td>")
-        htmlList.push("        </tr>")
-        htmlList.push("      </table>")
-        htmlList.push("    </td>")
-        htmlList.push("    <td rowspan=5 width=1px style='cursor:e-resize; background: blue;' onmousedown='" + this.eventTriger(EventSrc.new(MouseState.mouseDown, null, {"dir":"horizon"})) + "'></td>")
-        htmlList.push("  </tr>")
+        htmlList.push("<table style='border-collapse: collapse; height: 100%; width: 100%;'>")
         htmlList.push("  <tr>")
         htmlList.push("    <td style='height:1px;border-bottom: 2px solid rgba(204,31,48,1);'>")
         let tab = this.children.getValue(ModelPropEditor.Keys.section).node
@@ -169,55 +153,9 @@ class ModelPropEditor extends DivEle{
         this.addDivEleFrame(htmlList)
         return htmlList
     }
-
-    addDivEleFrame(htmlList){
-        Format.applyIndent(htmlList)
-        if(this.props.hasOwnProperty("zIdx")){
-            htmlList.splice(0,0, "<div id='" + this.id + " style='z-index:" + this.props.zIdx + ";height: 100%;'>")
-        } else {
-            htmlList.splice(0,0, "<div id='" + this.id + "' style='height: 100%;'>")
-        }
-        htmlList.push("</div>")
-    }
     
     processEvent(eventObj){
-        let mouse = new MouseState()
-        let event = eventObj[EventSrc.Key.rawEvent]
-        if(eventObj.type == MouseState.mouseDown && eventObj.data.dir){
-            if(this.mouseData){
-                delete this.mouseData
-            }
-            this.mouseData = {}
-            if(eventObj.data.dir == "horizon"){
-                this.mouseData.x = event.x
-            } else {
-                this.mouseData.y = event.y
-            }
-            mouse.registerTarget(this)
-        } else if(eventObj.type == MouseState.mouseUp){
-            if(this.widthIncre != 0){
-                this.width = this.width + this.widthIncre
-            }
-            if(this.divHeightIncre !=0 ){
-                this.divHeight = this.divHeight + this.divHeightIncre
-            }
-            if(this.mouseData){
-                delete this.mouseData
-            }
-            mouse.deregister()
-        } else if(eventObj.type == MouseState.mouseMoved){
-            if(this.mouseData){
-                if(event){
-                    if(this.mouseData.hasOwnProperty("x")){
-                        this.widthIncre = event.x - this.mouseData.x
-                        return true
-                    } else if(this.mouseData.hasOwnProperty("y")){
-                        this.divHeightIncre = event.y - this.mouseData.y
-                        return true
-                    }
-                }                
-            }
-        } else if(eventObj.type == DataStore.dataChanged && eventObj.data[EventSrc.Key.src] != this.id){
+        if(eventObj.type == DataStore.dataChanged && eventObj.data[EventSrc.Key.src] != this.id){
             let attrList = this.children.getValue(ModelPropEditor.Keys.attrList).node
             let attrEditor = this.children.getValue(ModelPropEditor.Keys.attrEditor).node
             if(eventObj.src == attrEditor.id){
@@ -251,7 +189,6 @@ class ModelPropEditor extends DivEle{
             }            
             return true
         }
-
         return false
     }
 
@@ -284,7 +221,6 @@ class ModelPropEditor extends DivEle{
         } else if(attrList.dataBag[TableList.Key.records][currentId]){
             attrList.render()
         }
-
     }
 
 }
